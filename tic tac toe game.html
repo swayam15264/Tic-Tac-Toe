@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tic Tac Toe vs Smart Bot</title>
+  <style>
+    body {
+      background: #121212;
+      font-family: Arial, sans-serif;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    h1 {
+      color: #00e676;
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      grid-template-rows: repeat(3, 100px);
+      gap: 10px;
+      margin: 20px 0;
+    }
+
+    .cell {
+      width: 100px;
+      height: 100px;
+      font-size: 40px;
+      background-color: #333;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .cell:hover {
+      background-color: #444;
+    }
+
+    .status {
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background: #00e676;
+      color: black;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #00c853;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Tic Tac Toe (Unbeatable Bot)</h1>
+  <div class="status" id="status">Your Turn (X)</div>
+  <div class="board" id="board"></div>
+  <button onclick="resetGame()">Restart</button>
+
+  <script>
+    const boardElement = document.getElementById("board");
+    const statusText = document.getElementById("status");
+
+    let board = ["", "", "", "", "", "", "", "", ""];
+    let gameActive = true;
+    const HUMAN = "X";
+    const BOT = "O";
+
+    const winPatterns = [
+      [0,1,2], [3,4,5], [6,7,8],
+      [0,3,6], [1,4,7], [2,5,8],
+      [0,4,8], [2,4,6]
+    ];
+
+    function drawBoard() {
+      boardElement.innerHTML = "";
+      for (let i = 0; i < 9; i++) {
+        const cell = document.createElement("div");
+        cell.classList.add("cell");
+        cell.dataset.index = i;
+        cell.innerText = board[i];
+        cell.addEventListener("click", playerMove);
+        boardElement.appendChild(cell);
+      }
+    }
+
+    function playerMove(e) {
+      const index = e.target.dataset.index;
+      if (!gameActive || board[index] !== "") return;
+
+      board[index] = HUMAN;
+      update();
+      if (checkWinner(HUMAN)) return;
+
+      setTimeout(() => {
+        const move = getBestMove();
+        if (move !== -1) {
+          board[move] = BOT;
+          update();
+          checkWinner(BOT);
+        }
+      }, 300);
+    }
+
+    function update() {
+      drawBoard();
+    }
+
+    function checkWinner(player) {
+      for (let pattern of winPatterns) {
+        const [a, b, c] = pattern;
+        if (board[a] === player && board[b] === player && board[c] === player) {
+          statusText.innerText = player === HUMAN ? "🎉 You Win!" : "💻 Bot Wins!";
+          gameActive = false;
+          return true;
+        }
+      }
+
+      if (!board.includes("")) {
+        statusText.innerText = "It's a Draw!";
+        gameActive = false;
+        return true;
+      }
+
+      statusText.innerText = player === HUMAN ? "Bot's Turn..." : "Your Turn (X)";
+      return false;
+    }
+
+    function resetGame() {
+      board = ["", "", "", "", "", "", "", "", ""];
+      gameActive = true;
+      statusText.innerText = "Your Turn (X)";
+      drawBoard();
+    }
+
+    function getBestMove() {
+      let bestScore = -Infinity;
+      let move = -1;
+
+      for (let i = 0; i < 9; i++) {
+        if (board[i] === "") {
+          board[i] = BOT;
+          let score = minimax(board, 0, false);
+          board[i] = "";
+          if (score > bestScore) {
+            bestScore = score;
+            move = i;
+          }
+        }
+      }
+      return move;
+    }
+
+    function minimax(newBoard, depth, isMaximizing) {
+      const winner = evaluateWinner();
+      if (winner === BOT) return 10 - depth;
+      if (winner === HUMAN) return depth - 10;
+      if (!newBoard.includes("")) return 0;
+
+      if (isMaximizing) {
+        let bestScore = -Infinity;
+        for (let i = 0; i < 9; i++) {
+          if (newBoard[i] === "") {
+            newBoard[i] = BOT;
+            let score = minimax(newBoard, depth + 1, false);
+            newBoard[i] = "";
+            bestScore = Math.max(score, bestScore);
+          }
+        }
+        return bestScore;
+      } else {
+        let bestScore = Infinity;
+        for (let i = 0; i < 9; i++) {
+          if (newBoard[i] === "") {
+            newBoard[i] = HUMAN;
+            let score = minimax(newBoard, depth + 1, true);
+            newBoard[i] = "";
+            bestScore = Math.min(score, bestScore);
+          }
+        }
+        return bestScore;
+      }
+    }
+
+    function evaluateWinner() {
+      for (let pattern of winPatterns) {
+        const [a, b, c] = pattern;
+        if (board[a] && board[a] === board[b] && board[b] === board[c]) {
+          return board[a];
+        }
+      }
+      return null;
+    }
+
+    drawBoard();
+  </script>
+
+</body>
+</html>
